@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Dashboard de Ventas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+
+<body>
+
+<div class="container mt-4">
+
+    <h2 class="text-center mb-4">Dashboard de Ventas</h2>
+
+    <!-- Barra de navegación admin (igual que en los otros templates) -->
+    <div class="admin-toolbar">
+        <a class="btn btn-primary admin-btn admin-btn-nav" href="/admin/dashboard">Dashboard</a>
+        <a class="btn btn-outline-primary admin-btn admin-btn-nav" href="/admin/productos">Productos</a>
+        <a class="btn btn-outline-primary admin-btn admin-btn-nav" href="/admin/usuarios">Usuarios</a>
+        <a class="btn btn-outline-primary admin-btn admin-btn-nav" href="/admin/compras">Historial Compras</a>
+        <a class="btn btn-outline-secondary admin-btn admin-btn-nav" href="/">Inicio</a>
+    </div>
+
+    <!-- ── Tarjeta: Total de ventas ── -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Resumen General</strong>
+            <span class="badge bg-secondary ms-2" id="ws-estado">⬤ Conectando…</span>
+        </div>
+        <div class="card-body">
+            <h4>
+                Total acumulado en ventas:
+                <span class="badge bg-success fs-5" id="total-ventas">
+                    RD$ <span th:text="${#numbers.formatDecimal(totalVentas, 1, 2)}">0.00</span>
+                </span>
+            </h4>
+            <small class="text-muted" id="ultimo-update">Datos cargados al abrir la página</small>
+        </div>
+    </div>
+
+    <!-- ── Tabla de productos vendidos ── -->
+    <h4>Productos Vendidos</h4>
+
+    <div class="alert alert-info" id="sin-datos" th:if="${cantidades.isEmpty()}">
+        No hay ventas registradas aún. La tabla y el gráfico aparecerán automáticamente cuando se realice la primera compra.
+    </div>
+
+    <table class="table table-bordered text-center align-middle"
+           id="tabla-productos"
+           th:if="${!cantidades.isEmpty()}">
+        <thead class="table-dark">
+        <tr>
+            <th>#</th>
+            <th>Producto</th>
+            <th>Unidades vendidas</th>
+        </tr>
+        </thead>
+        <tbody id="tbody-productos">
+        <tr th:each="nombre, stat : ${nombresProductos}">
+            <td th:text="${stat.index + 1}"></td>
+            <td th:text="${nombre}"></td>
+            <td>
+                <span class="badge bg-primary" th:text="${cantidades[stat.index]}"></span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- ── Gráfico de pastel ── -->
+    <div class="card mt-4" th:if="${!cantidades.isEmpty()}">
+        <div class="card-header">
+            <strong>Distribución de unidades vendidas</strong>
+        </div>
+        <div class="card-body text-center">
+            <div style="max-width: 420px; margin: 0 auto;">
+                <canvas id="graficoPastel"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Canvas oculto para cuando no hay datos al cargar pero llegan por WS -->
+    <div class="card mt-4" id="grafico-dinamico" style="display:none;">
+        <div class="card-header">
+            <strong>Distribución de unidades vendidas</strong>
+        </div>
+        <div class="card-body text-center">
+            <div style="max-width: 420px; margin: 0 auto;">
+                <canvas id="graficoPastelDinamico"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <a class="btn btn-outline-secondary admin-btn mt-3" href="/">
+        Volver al inicio
+    </a>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<!-- Datos iniciales inyectados por Thymeleaf -->
+<script th:inline="javascript">
+    const nombresIniciales    = /*[[${nombresProductos}]]*/ [];
+    const cantidadesIniciales = /*[[${cantidades}]]*/       [];
+    const totalInicial        = /*[[${totalVentas}]]*/      0;
+</script>
+
+<script>
+    // ── Paleta de colores ─────────────────────────────────
+    const COLORES = [
+        '#4e79a7','#f28e2b','#e15759','#76b7b2',
+        '#59a14f','#edc948','#b07aa1','#ff9da7',
+        '#9c755f','#bab0ac'
+    ];
+
+    let grafico = null;
+
+    function renderGrafico(nombres, cantidades) {
+        const sinDatos = document.getElementById('sin-datos');
+
+        if (nombres.length === 0) {
+            if (sinDatos) sinDatos.style.display = 'block';
+            return;
+        }
+        if (sinDatos) sinDatos.style.display = 'none';
+
+        const colores = nombres.map((_, i) => COLORES[i % COLORES.length]);
+
+        // Decidir qué canvas usar
+        let canvasId;
+        if (document.getElementById('graficoPastel')) {
+            canvasId = 'graficoPastel';
+        } else {
+            document.getElementById('grafico-dinamico').style.display = 'block';
+            canvasId = 'graficoPastelDinamico';
+        }
+
+        const ctx = document.getElementById(canvasId).getContext('2d');
+
+        if (grafico) {
+            grafico.data.labels                       = nombres;
+            grafico.data.datasets[0].data             = cantidades;
+            grafico.data.datasets[0].backgroundColor  = colores;
+            grafico.update();
+        } else {
+            grafico = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: nombres,
+                    datasets: [{
+                        label: 'Unidades vendidas',
+                        data: cantidades,
+                        backgroundColor: colores,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: item => ` ${item.label}: ${item.raw} unidades`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Render inicial con datos de Thymeleaf
+    renderGrafico(nombresIniciales, cantidadesIniciales);
+
+    // ── Actualizar tabla de productos ─────────────────────
+    function actualizarTabla(productos) {
+        let tabla = document.getElementById('tabla-productos');
+        const sinDatos = document.getElementById('sin-datos');
+
+        // Si no existía la tabla, crearla
+        if (!tabla) {
+            sinDatos.style.display = 'none';
+            tabla = document.createElement('table');
+            tabla.id = 'tabla-productos';
+            tabla.className = 'table table-bordered text-center align-middle';
+            tabla.innerHTML = `
+            <thead class="table-dark">
+                <tr><th>#</th><th>Producto</th><th>Unidades vendidas</th></tr>
+            </thead>
+            <tbody id="tbody-productos"></tbody>`;
+            sinDatos.insertAdjacentElement('afterend', tabla);
+        }
+
+        const tbody = document.getElementById('tbody-productos');
+        tbody.innerHTML = productos.map((p, i) => `
+        <tr>
+            <td>${i + 1}</td>
+            <td>${p.nombre}</td>
+            <td><span class="badge bg-primary">${p.cantidad}</span></td>
+        </tr>`).join('');
+    }
+
+    // ── WebSocket ─────────────────────────────────────────
+    const wsBadge = document.getElementById('ws-estado');
+
+    function conectarWS() {
+        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws    = new WebSocket(proto + '://' + location.host + '/ws/dashboard');
+
+        ws.onopen = function () {
+            wsBadge.textContent  = 'Conectado';
+            wsBadge.className    = 'badge bg-success ms-2';
+        };
+
+        ws.onmessage = function (evento) {
+            try {
+                const data = JSON.parse(evento.data);
+                if (data.tipo !== 'dashboardUpdate') return;
+
+                // Actualizar total
+                const spanTotal = document.querySelector('#total-ventas span');
+                if (spanTotal) spanTotal.textContent = parseFloat(data.totalVentas).toFixed(2);
+
+                // Timestamp
+                document.getElementById('ultimo-update').textContent =
+                    'Última actualización: ' + new Date().toLocaleTimeString();
+
+                // Tabla y gráfico
+                actualizarTabla(data.productos);
+                renderGrafico(
+                    data.productos.map(p => p.nombre),
+                    data.productos.map(p => p.cantidad)
+                );
+
+            } catch (e) {
+                console.error('Mensaje WS inesperado:', evento.data);
+            }
+        };
+
+        ws.onclose = function () {
+            wsBadge.textContent = 'Reconectando…';
+            wsBadge.className   = 'badge bg-secondary ms-2';
+            setTimeout(conectarWS, 3000);
+        };
+
+        ws.onerror = function () {
+            wsBadge.textContent = 'Error';
+            wsBadge.className   = 'badge bg-danger ms-2';
+            ws.close();
+        };
+    }
+
+    conectarWS();
+</script>
+
+</body>
+</html>

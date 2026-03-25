@@ -1,0 +1,31 @@
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             version="3.0">
+
+    <persistence-unit name="carritoPU">
+
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+        <class>edu.pucmm.eict.Carro.Usuario</class>
+        <class>edu.pucmm.eict.Carro.Producto</class>
+        <class>edu.pucmm.eict.Carro.ImagenProducto</class>
+        <class>edu.pucmm.eict.Carro.Comentario</class>
+        <class>edu.pucmm.eict.Carro.Compra</class>
+        <class>edu.pucmm.eict.Carro.ItemCarrito</class>
+        <class>edu.pucmm.eict.Carro.CarritoGuardado</class>
+
+        <properties>
+
+            <property name="jakarta.persistence.jdbc.driver" value="org.h2.Driver"/>
+            <property name="jakarta.persistence.jdbc.url"
+                      value="jdbc:h2:tcp://localhost:9092/~/carritoDB"/>
+            <property name="jakarta.persistence.jdbc.user" value="sa"/>
+            <property name="jakarta.persistence.jdbc.password" value=""/>
+
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <property name="hibernate.show_sql" value="true"/>
+
+        </properties>
+
+    </persistence-unit>
+
+</persistence>

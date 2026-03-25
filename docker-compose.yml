@@ -1,0 +1,46 @@
+# ──────────────────────────────────────────────────────────────
+#  Docker Compose — Práctica 3
+#  La aplicación usa H2 embebido (levantado por el propio Java),
+#  por lo que no necesita un contenedor de base de datos separado.
+#
+#  Para levantar:   docker compose up --build
+#  Para detener:    docker compose down
+# ──────────────────────────────────────────────────────────────
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: practica3-app
+
+    ports:
+      # Aplicación principal (Javalin)
+      - "7000:7000"
+      # Consola web de H2 (útil para revisar la BD en desarrollo)
+      - "8082:8082"
+
+    environment:
+      # Variable opcional: si se define, logAuthEvent() registra
+      # logins en una BD externa. Se deja vacía para usar solo H2.
+      JDBC_DATABASE_URL: ""
+
+    volumes:
+      # Persiste la BD H2 entre reinicios del contenedor.
+      # H2 guarda los archivos en ~/carritoDB dentro del contenedor,
+      # que en Alpine Linux corresponde a /root/
+      - h2-data:/root
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+# Volumen nombrado para persistir la BD H2
+volumes:
+  h2-data:

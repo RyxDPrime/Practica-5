@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${producto.nombre} + ' - Mi Tienda'">Producto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; }
+        .navbar { box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
+        /* Precio destacado */
+        .precio-grande {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #198754;
+        }
+
+        /* Carrusel con fondo neutro */
+        .carousel { background: #fff; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+        .carousel-item img { max-height: 420px; object-fit: contain; width: 100%; padding: 12px; }
+
+        /* Tarjetas de comentario */
+        .comentario-card { border: none; border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+        .comentario-card .autor { font-size: .85rem; font-weight: 700; color: #495057; }
+        .comentario-card .texto { font-size: .95rem; color: #212529; margin: 4px 0 0; }
+
+        /* Badge online */
+        #badge-online {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: #198754; color: #fff; font-size: .78rem;
+            font-weight: 600; padding: 4px 10px; border-radius: 20px;
+        }
+        #badge-online.desconectado { background: #6c757d; }
+        .pulso { width: 8px; height: 8px; background: #a3ffca;
+            border-radius: 50%; animation: pulso 1.4s infinite; }
+        @keyframes pulso {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50%       { transform: scale(1.5); opacity: .5; }
+        }
+
+        /* Animación de salida */
+        .comentario-eliminar { animation: fadeOut .4s ease forwards; }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(30px);
+                height: 0; margin: 0; padding: 0; overflow: hidden; }
+        }
+
+        /* Info de producto */
+        .info-card { border: none; border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.08); background: #fff; }
+    </style>
+</head>
+
+<body>
+
+<!-- ── Navbar ── -->
+<nav class="navbar navbar-light bg-white px-4 d-flex justify-content-between flex-wrap gap-2 mb-4">
+    <a class="navbar-brand fw-bold" href="/">Mi Tienda</a>
+    <div class="d-flex gap-2 align-items-center">
+        <span id="badge-online" class="desconectado" title="Usuarios navegando ahora">
+            <span class="pulso"></span>
+            <span id="contador-online">…</span> online
+        </span>
+        <a class="btn btn-outline-primary btn-sm" href="/carrito">
+            Carrito (<span th:text="${cantidadCarrito}">0</span>)
+        </a>
+        <a class="btn btn-outline-secondary btn-sm" href="/">← Volver</a>
+    </div>
+</nav>
+
+<div class="container pb-5">
+
+    <!-- ── Layout principal: imagen izq, info der ── -->
+    <div class="row g-4 mb-5">
+
+        <!-- Carrusel -->
+        <div class="col-md-6">
+            <div class="carousel slide"
+                 data-bs-ride="carousel"
+                 id="carouselProducto"
+                 th:if="${producto.imagenes != null and !producto.imagenes.isEmpty()}">
+
+                <div class="carousel-indicators">
+                    <button data-bs-target="#carouselProducto"
+                            th:aria-current="${stat.index == 0} ? 'true' : 'false'"
+                            th:aria-label="'Slide ' + ${stat.index + 1}"
+                            th:attr="data-bs-slide-to=${stat.index}"
+                            th:class="${stat.index == 0} ? 'active' : ''"
+                            th:each="img, stat : ${producto.imagenes}"
+                            type="button">
+                    </button>
+                </div>
+
+                <div class="carousel-inner">
+                    <div th:class="${stat.index == 0} ? 'carousel-item active' : 'carousel-item'"
+                         th:each="img, stat : ${producto.imagenes}">
+                        <img th:alt="'Imagen ' + ${stat.index + 1}"
+                             th:src="'data:image/png;base64,' + ${img.base64}">
+                    </div>
+                </div>
+
+                <button class="carousel-control-prev" data-bs-slide="prev" data-bs-target="#carouselProducto" type="button">
+                    <span class="carousel-control-prev-icon"></span>
+                    <span class="visually-hidden">Anterior</span>
+                </button>
+                <button class="carousel-control-next" data-bs-slide="next" data-bs-target="#carouselProducto" type="button">
+                    <span class="carousel-control-next-icon"></span>
+                    <span class="visually-hidden">Siguiente</span>
+                </button>
+            </div>
+
+            <!-- Sin imagen -->
+            <div class="d-flex align-items-center justify-content-center bg-white rounded-3 shadow-sm"
+                 style="height:300px;"
+                 th:if="${producto.imagenes == null or producto.imagenes.isEmpty()}">
+                <span class="text-muted fs-1">No hay imagen</span>
+            </div>
+        </div>
+
+        <!-- Info del producto -->
+        <div class="col-md-6">
+            <div class="info-card p-4 h-100 d-flex flex-column gap-3">
+
+                <div>
+                    <h2 class="fw-bold mb-1" th:text="${producto.nombre}">Nombre</h2>
+                    <p class="precio-grande mb-0">
+                        RD$ <span th:text="${producto.precio}">0.00</span>
+                    </p>
+                </div>
+
+                <hr class="my-1">
+
+                <div>
+                    <p class="text-muted small fw-semibold mb-1">DESCRIPCIÓN</p>
+                    <p class="mb-0" th:text="${producto.descripcion}">Descripción del producto.</p>
+                </div>
+
+                <!-- Formulario de agregar al carrito -->
+                <div class="mt-auto" th:if="${session.usuario != null and !session.usuario.admin}">
+                    <form action="/carrito/items" method="post">
+                        <input name="id" th:value="${producto.id}" type="hidden">
+                        <label class="form-label fw-semibold">Cantidad</label>
+                        <div class="input-group">
+                            <input class="form-control" min="1" name="cantidad" type="number" value="1">
+                            <button class="btn btn-success px-4" type="submit">
+                                Agregar al carrito
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="alert alert-warning py-2 mb-0"
+                     th:if="${session.usuario == null}">
+                    <a href="/login">Inicia sesión</a> para agregar productos al carrito.
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Comentarios ── -->
+    <div class="row">
+        <div class="col-lg-8">
+
+            <h5 class="fw-bold mb-3">
+                Comentarios
+                <span class="badge bg-secondary ms-1"
+                      id="contador-comentarios"
+                      th:text="${producto.comentarios.size()}">0</span>
+            </h5>
+
+            <!-- Lista de comentarios -->
+            <div id="seccion-comentarios">
+                <div class="comentario-card card mb-3"
+                     th:each="c : ${producto.comentarios}"
+                     th:id="'comentario-' + ${c.id}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="autor">👤 <span th:text="${c.autor}">autor</span></span>
+                                <p class="texto" th:text="${c.texto}">texto</p>
+                            </div>
+                            <form method="post"
+                                  th:action="@{/admin/comentarios/{id}/eliminar(id=${c.id})}"
+                                  th:if="${session.usuario != null and session.usuario.admin}">
+                                <button class="btn btn-outline-danger btn-sm" type="submit">
+                                    Eliminar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-muted fst-italic" id="sin-comentarios"
+               style="display:none;">
+                Aún no hay comentarios. ¡Sé el primero en comentar!
+            </p>
+
+            <p class="text-muted fst-italic"
+               th:if="${producto.comentarios.isEmpty()}">
+                Aún no hay comentarios. ¡Sé el primero en comentar!
+            </p>
+
+            <!-- Formulario de comentario -->
+            <div class="card mt-4 border-0 shadow-sm"
+                 th:if="${session.usuario != null and !session.usuario.admin}">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Agregar un comentario</h6>
+                    <form action="/producto/comentar" method="post">
+                        <input name="productoId" th:value="${producto.id}" type="hidden">
+                        <div class="mb-3">
+                            <textarea class="form-control"
+                                      name="texto"
+                                      placeholder="Escribe tu comentario aquí…"
+                                      required
+                                      rows="3"></textarea>
+                        </div>
+                        <button class="btn btn-primary" type="submit">
+                            Publicar comentario
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-warning mt-3"
+                 th:if="${session.usuario == null}">
+                <a href="/login">Inicia sesión</a> para dejar un comentario.
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Req. 2: WebSocket eliminar comentarios en tiempo real -->
+<script th:inline="javascript">
+    (function () {
+        const productoId = /*[[${producto.id}]]*/ 0;
+        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        let ws;
+
+        function conectar() {
+            ws = new WebSocket(proto + '://' + location.host + '/ws/producto/' + productoId);
+
+            ws.onmessage = function (e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.tipo === 'eliminarComentario') {
+                        const tarjeta = document.getElementById('comentario-' + data.comentarioId);
+                        if (tarjeta) {
+                            tarjeta.classList.add('comentario-eliminar');
+                            tarjeta.addEventListener('animationend', () => {
+                                tarjeta.remove();
+                                const restantes = document.querySelectorAll('#seccion-comentarios .card');
+                                // Actualizar el contador del badge
+                                const badge = document.getElementById('contador-comentarios');
+                                if (badge) badge.textContent = restantes.length;
+                                if (restantes.length === 0)
+                                    document.getElementById('sin-comentarios').style.display = 'block';
+                            });
+                        }
+                    }
+                } catch (_) {}
+            };
+
+            ws.onclose = () => setTimeout(conectar, 3000);
+            ws.onerror = () => ws.close();
+        }
+
+        conectar();
+        window.addEventListener('beforeunload', () => ws && ws.close());
+    })();
+</script>
+
+<!-- WS: contador de usuarios online -->
+<script>
+    (function () {
+        const badge    = document.getElementById('badge-online');
+        const contador = document.getElementById('contador-online');
+        const proto    = location.protocol === 'https:' ? 'wss' : 'ws';
+        let ws;
+        function conectarOnline() {
+            ws = new WebSocket(proto + '://' + location.host + '/ws/online');
+            ws.onopen    = () => badge.classList.remove('desconectado');
+            ws.onmessage = e => {
+                try {
+                    const d = JSON.parse(e.data);
+                    if (d.online !== undefined) contador.textContent = d.online;
+                } catch (_) {}
+            };
+            ws.onclose = () => {
+                badge.classList.add('desconectado');
+                contador.textContent = '?';
+                setTimeout(conectarOnline, 3000);
+            };
+            ws.onerror = () => ws.close();
+        }
+        conectarOnline();
+        window.addEventListener('beforeunload', () => ws && ws.close());
+    })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,118 @@
+:root {
+    --primary-color: #0d6efd;
+    --bg-light: #f8f9fa;
+    --text-dark: #212529;
+    --text-muted: #6c757d;
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+/* Tarjetas de Producto Modernas */
+.product-card {
+    border: none;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    background: #fff;
+    height: 100%;
+}
+
+.product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 14px 28px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.08);
+}
+
+.product-img-container {
+    height: 220px;
+    border-radius: 12px 12px 0 0;
+    overflow: hidden;
+    background-color: #f1f1f1;
+}
+
+.product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-img {
+    transform: scale(1.1);
+}
+
+/* Tipografía y Precios */
+.price-tag {
+    color: #198754;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.section-title {
+    font-weight: 800;
+    margin-bottom: 2rem;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: var(--primary-color);
+    border-radius: 2px;
+}
+
+/* Formularios Estilizados */
+.form-card {
+    max-width: 450px;
+    margin: 40px auto;
+    padding: 35px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+.form-control {
+    border-radius: 8px;
+    padding: 10px 15px;
+    border: 1px solid #dee2e6;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+}
+
+/* Panel admin: barra y botones consistentes en todas las vistas */
+.admin-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.admin-btn {
+    border-radius: 8px;
+    font-weight: 600;
+    min-width: 150px;
+}
+
+.admin-btn-nav {
+    min-width: 170px;
+}
+
+.admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}

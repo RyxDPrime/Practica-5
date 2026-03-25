@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Carrito de Compras - Mi Tienda</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; }
+        .navbar { box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
+        /* Badge online */
+        #badge-online {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: #198754; color: #fff; font-size: .78rem;
+            font-weight: 600; padding: 4px 10px; border-radius: 20px;
+        }
+        #badge-online.desconectado { background: #6c757d; }
+        .pulso { width: 8px; height: 8px; background: #a3ffca;
+            border-radius: 50%; animation: pulso 1.4s infinite; }
+        @keyframes pulso {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50%       { transform: scale(1.5); opacity: .5; }
+        }
+        .resumen-card { border: none; border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.08); background: #fff; }
+        .tabla-carrito th { background: #212529; color: #fff; }
+        .total-row { font-size: 1.15rem; font-weight: 700; color: #198754; }
+    </style>
+</head>
+
+<body>
+
+<!-- ── Navbar ── -->
+<nav class="navbar navbar-light bg-white px-4 d-flex justify-content-between flex-wrap gap-2 mb-4">
+    <a class="navbar-brand fw-bold" href="/">Mi Tienda</a>
+    <div class="d-flex gap-2 align-items-center">
+        <span id="badge-online" class="desconectado" title="Usuarios navegando ahora">
+            <span class="pulso"></span>
+            <span id="contador-online">…</span> online
+        </span>
+        <a class="btn btn-outline-secondary btn-sm" href="/">← Seguir comprando</a>
+    </div>
+</nav>
+
+<div class="container pb-5">
+
+    <h2 class="fw-bold mb-4">Tu carrito</h2>
+
+    <!-- Carrito vacío -->
+    <div class="text-center py-5" th:if="${#lists.isEmpty(items)}">
+        <p class="fs-1 mb-2">🛒</p>
+        <h5 class="text-muted">Tu carrito está vacío</h5>
+        <a class="btn btn-primary mt-3" href="/">Ver productos</a>
+    </div>
+
+    <!-- Carrito con productos -->
+    <div class="row g-4" th:if="${!#lists.isEmpty(items)}">
+
+        <!-- Tabla de productos -->
+        <div class="col-lg-8">
+            <div class="resumen-card p-3">
+                <form action="/carrito/actualizar" id="form-carrito" method="post">
+                    <table class="table tabla-carrito align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-end">Precio</th>
+                            <th class="text-center" style="width:110px;">Cant.</th>
+                            <th class="text-end">Subtotal</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="item : ${items}">
+                            <td class="fw-semibold" th:text="${item.producto.nombre}">Producto</td>
+
+                            <td class="text-end text-muted">
+                                RD$ <span th:text="${item.producto.precio}">0</span>
+                            </td>
+
+                            <td class="text-center">
+                                <input class="form-control form-control-sm text-center cantidad-input"
+                                       min="0"
+                                       name="cantidad"
+                                       th:value="${item.cantidad}"
+                                       type="number">
+                                <input name="id" th:value="${item.producto.id}" type="hidden">
+                            </td>
+
+                            <td class="text-end fw-bold">
+                                RD$ <span th:text="${item.subtotal}">0</span>
+                            </td>
+
+                            <td class="text-center">
+                                <button class="btn btn-outline-danger btn-sm"
+                                        name="eliminarId"
+                                        th:value="${item.producto.id}"
+                                        title="Eliminar"
+                                        type="submit">
+                                    Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Actualización automática al cambiar cantidad (ver JS) -->
+                </form>
+            </div>
+        </div>
+
+        <!-- Panel de resumen y checkout -->
+        <div class="col-lg-4">
+            <div class="resumen-card p-4 d-flex flex-column gap-3">
+                <h5 class="fw-bold mb-0">Resumen del pedido</h5>
+                <hr class="my-0">
+
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Subtotal</span>
+                    <span>RD$ <span th:text="${total}">0</span></span>
+                </div>
+
+                <div class="d-flex justify-content-between total-row border-top pt-2">
+                    <span>Total</span>
+                    <span>RD$ <span th:text="${total}">0</span></span>
+                </div>
+
+                <form action="/carrito/checkout" method="post">
+                    <button class="btn btn-success w-100 btn-lg" type="submit">
+                        ✅ Procesar compra
+                    </button>
+                </form>
+
+                <a class="btn btn-outline-secondary btn-sm text-center" href="/">
+                    ← Seguir comprando
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- WS: contador de usuarios online -->
+<script>
+    (function () {
+        const badge    = document.getElementById('badge-online');
+        const contador = document.getElementById('contador-online');
+        const proto    = location.protocol === 'https:' ? 'wss' : 'ws';
+        let ws;
+        function conectarOnline() {
+            ws = new WebSocket(proto + '://' + location.host + '/ws/online');
+            ws.onopen    = () => badge.classList.remove('desconectado');
+            ws.onmessage = e => {
+                try {
+                    const d = JSON.parse(e.data);
+                    if (d.online !== undefined) contador.textContent = d.online;
+                } catch (_) {}
+            };
+            ws.onclose = () => {
+                badge.classList.add('desconectado');
+                contador.textContent = '?';
+                setTimeout(conectarOnline, 3000);
+            };
+            ws.onerror = () => ws.close();
+        }
+        conectarOnline();
+        window.addEventListener('beforeunload', () => ws && ws.close());
+    })();
+</script>
+
+<!-- Actualización automática del carrito al cambiar cantidad -->
+<script>
+    (function () {
+        let debounceTimer = null;
+
+        // Escuchar cambios en todos los inputs de cantidad
+        document.querySelectorAll('.cantidad-input').forEach(function (input) {
+            input.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                // Esperar 800ms de inactividad antes de enviar
+                debounceTimer = setTimeout(function () {
+                    document.getElementById('form-carrito').submit();
+                }, 800);
+            });
+        });
+    })();
+</script>
+
+</body>
+</html>
