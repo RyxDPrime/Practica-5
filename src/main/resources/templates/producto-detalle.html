@@ -200,6 +200,7 @@
             </p>
 
             <p class="text-muted fst-italic"
+               id="sin-comentarios-estatico"
                th:if="${producto.comentarios.isEmpty()}">
                 Aún no hay comentarios. ¡Sé el primero en comentar!
             </p>
@@ -241,8 +242,59 @@
 <script th:inline="javascript">
     (function () {
         const productoId = /*[[${producto.id}]]*/ 0;
+        const esAdmin = /*[[${session.usuario != null and session.usuario.admin}]]*/ false;
         const proto = location.protocol === 'https:' ? 'wss' : 'ws';
         let ws;
+
+        function actualizarContador() {
+            const restantes = document.querySelectorAll('#seccion-comentarios .card').length;
+            const badge = document.getElementById('contador-comentarios');
+            if (badge) badge.textContent = restantes;
+            const vacio = restantes === 0;
+            const msgDinamico = document.getElementById('sin-comentarios');
+            const msgEstatico = document.getElementById('sin-comentarios-estatico');
+            if (msgDinamico) msgDinamico.style.display = vacio ? 'block' : 'none';
+            if (msgEstatico) msgEstatico.style.display = vacio ? 'block' : 'none';
+        }
+
+        function crearTarjetaComentario(data) {
+            const card = document.createElement('div');
+            card.className = 'comentario-card card mb-3';
+            card.id = 'comentario-' + data.comentarioId;
+
+            const body = document.createElement('div');
+            body.className = 'card-body';
+
+            const row = document.createElement('div');
+            row.className = 'd-flex justify-content-between align-items-start';
+
+            const info = document.createElement('div');
+            const autor = document.createElement('span');
+            autor.className = 'autor';
+            autor.textContent = '👤 ' + (data.autor || 'autor');
+            const texto = document.createElement('p');
+            texto.className = 'texto';
+            texto.textContent = data.texto || '';
+            info.appendChild(autor);
+            info.appendChild(texto);
+            row.appendChild(info);
+
+            if (esAdmin) {
+                const form = document.createElement('form');
+                form.method = 'post';
+                form.action = '/admin/comentarios/' + data.comentarioId + '/eliminar';
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-outline-danger btn-sm';
+                btn.type = 'submit';
+                btn.textContent = 'Eliminar';
+                form.appendChild(btn);
+                row.appendChild(form);
+            }
+
+            body.appendChild(row);
+            card.appendChild(body);
+            return card;
+        }
 
         function conectar() {
             ws = new WebSocket(proto + '://' + location.host + '/ws/producto/' + productoId);
@@ -256,13 +308,14 @@
                             tarjeta.classList.add('comentario-eliminar');
                             tarjeta.addEventListener('animationend', () => {
                                 tarjeta.remove();
-                                const restantes = document.querySelectorAll('#seccion-comentarios .card');
-                                // Actualizar el contador del badge
-                                const badge = document.getElementById('contador-comentarios');
-                                if (badge) badge.textContent = restantes.length;
-                                if (restantes.length === 0)
-                                    document.getElementById('sin-comentarios').style.display = 'block';
+                                actualizarContador();
                             });
+                        }
+                    } else if (data.tipo === 'agregarComentario') {
+                        const contenedor = document.getElementById('seccion-comentarios');
+                        if (contenedor && !document.getElementById('comentario-' + data.comentarioId)) {
+                            contenedor.prepend(crearTarjetaComentario(data));
+                            actualizarContador();
                         }
                     }
                 } catch (_) {}
@@ -273,6 +326,7 @@
         }
 
         conectar();
+        actualizarContador();
         window.addEventListener('beforeunload', () => ws && ws.close());
     })();
 </script>

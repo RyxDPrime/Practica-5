@@ -49,6 +49,23 @@ public class Main {
         });
     }
 
+    static void broadcastAgregarComentario(Long productoId, Long comentarioId, String autor, String texto) {
+        Set<WsContext> sesiones = productosWs.get(productoId);
+        if (sesiones == null) return;
+        String msg = "{\"tipo\":\"agregarComentario\",\"comentarioId\":" + comentarioId +
+                ",\"autor\":\"" + escapeJson(autor) + "\",\"texto\":\"" + escapeJson(texto) + "\"}";
+        sesiones.removeIf(ctx -> {
+            try { ctx.send(msg); return false; }
+            catch (Exception e) { return true; }
+        });
+    }
+
+    private static String escapeJson(String value) {
+        if (value == null) return "";
+        return value.replace("\\", "\\\\").replace("\"", "\\\"")
+                .replace("\n", "\\n").replace("\r", "\\r");
+    }
+
     // ─────────────────────────────────────────────────────────
     //  Req. 3 — Dashboard de ventas en tiempo real
     // ─────────────────────────────────────────────────────────
@@ -216,7 +233,9 @@ public class Main {
                             p.setPrecio(Double.parseDouble(precioStr));
                             p.setDescripcion(descripcion);
                             List<UploadedFile> archivos = ctx.uploadedFiles("imagenes");
-                            if (archivos != null && !archivos.isEmpty()) {
+                            boolean hayImagenesNuevas = archivos != null && archivos.stream()
+                                    .anyMatch(archivo -> archivo != null && archivo.size() > 0);
+                            if (hayImagenesNuevas) {
                                 p.getImagenes().clear();
                                 for (UploadedFile archivo : archivos) {
                                     if (archivo != null && archivo.size() > 0) {
@@ -424,12 +443,18 @@ public class Main {
                 EntityManager em = emf.createEntityManager();
                 em.getTransaction().begin();
                 Producto producto = em.find(Producto.class, productoId);
+                Comentario nuevoComentario = null;
                 if (producto != null) {
                     Comentario c = new Comentario(usuario.getUsername(), texto, producto);
                     producto.getComentarios().add(c);
                     em.persist(c);
+                    nuevoComentario = c;
                 }
                 em.getTransaction().commit(); em.close();
+                if (nuevoComentario != null && nuevoComentario.getId() != null) {
+                    broadcastAgregarComentario(productoId, nuevoComentario.getId(),
+                            nuevoComentario.getAutor(), nuevoComentario.getTexto());
+                }
                 ctx.redirect("/producto/" + productoId);
             });
 
