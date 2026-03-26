@@ -61,7 +61,7 @@
             <td th:text="${stat.index + 1}"></td>
             <td th:text="${nombre}"></td>
             <td>
-                <span class="badge bg-primary" th:text="${cantidades[stat.index]}"></span>
+                <span class="text-dark fw-semibold" th:text="${cantidades[stat.index]}"></span>
             </td>
         </tr>
         </tbody>
@@ -199,7 +199,7 @@
         <tr>
             <td>${i + 1}</td>
             <td>${p.nombre}</td>
-            <td><span class="badge bg-primary">${p.cantidad}</span></td>
+            <td><span class="text-dark fw-semibold">${p.cantidad}</span></td>
         </tr>`).join('');
     }
 

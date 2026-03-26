@@ -160,7 +160,7 @@
 
                     <form action="/carrito/items"
                           method="post"
-                          th:if="${usuario != null}">
+                          th:if="${usuario != null and !usuario.admin}">
                         <input name="id" th:value="${p.id}" type="hidden">
                         <div class="input-group input-group-sm">
                             <input class="form-control text-center"

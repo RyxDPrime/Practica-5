@@ -434,8 +434,18 @@ public class Main {
             });
 
             // ── Auth ──────────────────────────────────────────────────
-            config.routes.get("/login",    ctx -> ctx.render("login.html"));
-            config.routes.get("/registro", ctx -> ctx.render("registro.html"));
+            config.routes.get("/login", ctx -> {
+                boolean loginError = "1".equals(ctx.queryParam("error"));
+                boolean registroOk = "1".equals(ctx.queryParam("registro"));
+                ctx.render("login.html", Map.of(
+                        "loginError", loginError,
+                        "registroOk", registroOk
+                ));
+            });
+            config.routes.get("/registro", ctx -> {
+                boolean registroError = "1".equals(ctx.queryParam("error"));
+                ctx.render("registro.html", Map.of("registroError", registroError));
+            });
 
             config.routes.post("/login", ctx -> {
                 String username = ctx.formParam("username");
@@ -455,7 +465,7 @@ public class Main {
                         ctx.cookie("rememberMe", encryptor.encrypt(u.getUsername()), 60 * 60 * 24 * 7);
                     logAuthEvent(username);
                     ctx.redirect(u.isAdmin() ? "/admin/dashboard" : "/");
-                } else { ctx.redirect("/login"); }
+                } else { ctx.redirect("/login?error=1"); }
                 em.close();
             });
 
@@ -463,14 +473,19 @@ public class Main {
                 EntityManager em = emf.createEntityManager();
                 String username = ctx.formParam("username");
                 String password = ctx.formParam("password");
+                if (username == null || password == null || username.isBlank() || password.isBlank()) {
+                    em.close();
+                    ctx.redirect("/registro?error=1");
+                    return;
+                }
                 List<Usuario> existe = em.createQuery("FROM Usuario WHERE username = :u", Usuario.class)
                         .setParameter("u", username).getResultList();
-                if (!existe.isEmpty()) { ctx.redirect("/registro"); em.close(); return; }
+                if (!existe.isEmpty()) { ctx.redirect("/registro?error=1"); em.close(); return; }
                 em.getTransaction().begin();
                 Usuario nuevo = new Usuario();
                 nuevo.setUsername(username); nuevo.setPassword(password); nuevo.setAdmin(false);
                 em.persist(nuevo); em.getTransaction().commit(); em.close();
-                ctx.redirect("/login");
+                ctx.redirect("/login?registro=1");
             });
 
             config.routes.get("/logout", ctx -> {

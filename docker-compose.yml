@@ -23,8 +23,8 @@ services:
 
     environment:
       # Variable opcional: si se define, logAuthEvent() registra
-      # logins en una BD externa. Se deja vacía para usar solo H2.
-      JDBC_DATABASE_URL: ""
+      # logins en una BD externa. Se toma del entorno host.
+      JDBC_DATABASE_URL: ${JDBC_DATABASE_URL:-}
 
     volumes:
       # Persiste la BD H2 entre reinicios del contenedor.

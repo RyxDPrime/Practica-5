@@ -16,6 +16,14 @@
 
         <h4 class="text-center mb-4">Iniciar Sesión</h4>
 
+        <div class="alert alert-success" role="alert" th:if="${registroOk}">
+            Cuenta creada correctamente. Ya puedes iniciar sesion.
+        </div>
+
+        <div class="alert alert-danger" role="alert" th:if="${loginError}">
+            Usuario o contraseña incorrectos.
+        </div>
+
         <form action="/login" method="post">
 
             <div class="mb-3">
