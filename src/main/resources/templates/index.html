@@ -83,7 +83,8 @@
     <div class="d-flex align-items-center gap-2 flex-wrap">
 
         <!-- Req. 1: usuarios online -->
-        <span id="badge-online" class="desconectado" title="Usuarios navegando ahora">
+        <span id="badge-online" class="desconectado" title="Usuarios navegando ahora"
+              th:if="${usuario != null}">
             <span class="pulso"></span>
             <span id="contador-online">…</span> online
         </span>
