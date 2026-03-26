@@ -195,13 +195,7 @@
             </div>
 
             <p class="text-muted fst-italic" id="sin-comentarios"
-               style="display:none;">
-                Aún no hay comentarios. ¡Sé el primero en comentar!
-            </p>
-
-            <p class="text-muted fst-italic"
-               id="sin-comentarios-estatico"
-               th:if="${producto.comentarios.isEmpty()}">
+               th:style="${producto.comentarios.isEmpty()} ? 'display:block;' : 'display:none;'">
                 Aún no hay comentarios. ¡Sé el primero en comentar!
             </p>
 
@@ -251,10 +245,8 @@
             const badge = document.getElementById('contador-comentarios');
             if (badge) badge.textContent = restantes;
             const vacio = restantes === 0;
-            const msgDinamico = document.getElementById('sin-comentarios');
-            const msgEstatico = document.getElementById('sin-comentarios-estatico');
-            if (msgDinamico) msgDinamico.style.display = vacio ? 'block' : 'none';
-            if (msgEstatico) msgEstatico.style.display = vacio ? 'block' : 'none';
+            const msgSinComentarios = document.getElementById('sin-comentarios');
+            if (msgSinComentarios) msgSinComentarios.style.display = vacio ? 'block' : 'none';
         }
 
         function crearTarjetaComentario(data) {
