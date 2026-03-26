@@ -16,24 +16,17 @@ application {
 }
 
 dependencies {
-    // Javalin Core y Rendering
     implementation 'io.javalin:javalin:7.1.0'
     implementation 'io.javalin:javalin-rendering:7.1.0'
-
-    // Logging (SLF4J 2.x utiliza ServiceLoader, es la rama moderna)
     implementation 'org.slf4j:slf4j-simple:2.0.17'
-
-    // Template Engine
     implementation 'io.javalin:javalin-rendering-thymeleaf:7.0.1'
     implementation 'org.thymeleaf:thymeleaf:3.1.3.RELEASE'
-    // Persistence (Hibernate 6.6+ es la versión estable actual)
     implementation 'org.hibernate.orm:hibernate-core:6.6.26.Final'
 
-    // Databases
+
     implementation 'com.h2database:h2:2.4.240'
     implementation 'org.postgresql:postgresql:42.7.10'
 
-    // Encryption (Jasypt es un proyecto maduro, la 1.9.3 sigue siendo el estándar)
     implementation 'org.jasypt:jasypt:1.9.3'
 
     testImplementation platform('org.junit:junit-bom:5.10.0')

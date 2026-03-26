@@ -13,7 +13,6 @@
 
     <h2 class="text-center mb-4">Dashboard de Ventas</h2>
 
-    <!-- Barra de navegación admin (igual que en los otros templates) -->
     <div class="admin-toolbar">
         <a class="btn btn-primary admin-btn admin-btn-nav" href="/admin/dashboard">Dashboard</a>
         <a class="btn btn-outline-primary admin-btn admin-btn-nav" href="/admin/productos">Productos</a>
@@ -22,7 +21,6 @@
         <a class="btn btn-outline-secondary admin-btn admin-btn-nav" href="/">Inicio</a>
     </div>
 
-    <!-- ── Tarjeta: Total de ventas ── -->
     <div class="card mb-4">
         <div class="card-header">
             <strong>Resumen General</strong>
@@ -39,7 +37,6 @@
         </div>
     </div>
 
-    <!-- ── Tabla de productos vendidos ── -->
     <h4>Productos Vendidos</h4>
 
     <div class="alert alert-info" id="sin-datos" th:if="${cantidades.isEmpty()}">
@@ -67,7 +64,6 @@
         </tbody>
     </table>
 
-    <!-- ── Gráfico de pastel ── -->
     <div class="card mt-4" th:if="${!cantidades.isEmpty()}">
         <div class="card-header">
             <strong>Distribución de unidades vendidas</strong>
@@ -79,7 +75,6 @@
         </div>
     </div>
 
-    <!-- Canvas oculto para cuando no hay datos al cargar pero llegan por WS -->
     <div class="card mt-4" id="grafico-dinamico" style="display:none;">
         <div class="card-header">
             <strong>Distribución de unidades vendidas</strong>
@@ -97,18 +92,17 @@
 
 </div>
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
-<!-- Datos iniciales inyectados por Thymeleaf -->
+
 <script th:inline="javascript">
-    const nombresIniciales    = /*[[${nombresProductos}]]*/ [];
-    const cantidadesIniciales = /*[[${cantidades}]]*/       [];
-    const totalInicial        = /*[[${totalVentas}]]*/      0;
+    const nombresIniciales    =   [];
+    const cantidadesIniciales =   [];
+    const totalInicial        =    0;
 </script>
 
 <script>
-    // ── Paleta de colores ─────────────────────────────────
+
     const COLORES = [
         '#4e79a7','#f28e2b','#e15759','#76b7b2',
         '#59a14f','#edc948','#b07aa1','#ff9da7',
@@ -128,7 +122,6 @@
 
         const colores = nombres.map((_, i) => COLORES[i % COLORES.length]);
 
-        // Decidir qué canvas usar
         let canvasId;
         if (document.getElementById('graficoPastel')) {
             canvasId = 'graficoPastel';
@@ -172,15 +165,12 @@
         }
     }
 
-    // Render inicial con datos de Thymeleaf
     renderGrafico(nombresIniciales, cantidadesIniciales);
 
-    // ── Actualizar tabla de productos ─────────────────────
     function actualizarTabla(productos) {
         let tabla = document.getElementById('tabla-productos');
         const sinDatos = document.getElementById('sin-datos');
 
-        // Si no existía la tabla, crearla
         if (!tabla) {
             sinDatos.style.display = 'none';
             tabla = document.createElement('table');
@@ -203,7 +193,6 @@
         </tr>`).join('');
     }
 
-    // ── WebSocket ─────────────────────────────────────────
     const wsBadge = document.getElementById('ws-estado');
 
     function conectarWS() {
@@ -220,15 +209,15 @@
                 const data = JSON.parse(evento.data);
                 if (data.tipo !== 'dashboardUpdate') return;
 
-                // Actualizar total
+
                 const spanTotal = document.querySelector('#total-ventas span');
                 if (spanTotal) spanTotal.textContent = parseFloat(data.totalVentas).toFixed(2);
 
-                // Timestamp
+
                 document.getElementById('ultimo-update').textContent =
                     'Última actualización: ' + new Date().toLocaleTimeString();
 
-                // Tabla y gráfico
+
                 actualizarTabla(data.productos);
                 renderGrafico(
                     data.productos.map(p => p.nombre),

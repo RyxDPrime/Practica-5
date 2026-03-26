@@ -12,7 +12,6 @@ body {
     line-height: 1.6;
 }
 
-/* Tarjetas de Producto Modernas */
 .product-card {
     border: none;
     border-radius: 12px;
@@ -44,7 +43,6 @@ body {
     transform: scale(1.1);
 }
 
-/* Tipografía y Precios */
 .price-tag {
     color: #198754;
     font-weight: 700;
@@ -70,7 +68,6 @@ body {
     border-radius: 2px;
 }
 
-/* Formularios Estilizados */
 .form-card {
     max-width: 450px;
     margin: 40px auto;
@@ -91,7 +88,6 @@ body {
     box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
 }
 
-/* Panel admin: barra y botones consistentes en todas las vistas */
 .admin-toolbar {
     display: flex;
     flex-wrap: wrap;

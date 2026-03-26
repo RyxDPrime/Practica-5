@@ -8,7 +8,6 @@
         body { background: #f8f9fa; }
         .navbar { box-shadow: 0 1px 4px rgba(0,0,0,.1); }
 
-        /* Badge online */
         #badge-online {
             display: inline-flex; align-items: center; gap: 5px;
             background: #198754; color: #fff; font-size: .78rem;
@@ -30,7 +29,6 @@
 
 <body>
 
-<!-- ── Navbar ── -->
 <nav class="navbar navbar-light bg-white px-4 d-flex justify-content-between flex-wrap gap-2 mb-4">
     <a class="navbar-brand fw-bold" href="/">Mi Tienda</a>
     <div class="d-flex gap-2 align-items-center">
@@ -46,17 +44,14 @@
 
     <h2 class="fw-bold mb-4">Tu carrito</h2>
 
-    <!-- Carrito vacío -->
     <div class="text-center py-5" th:if="${#lists.isEmpty(items)}">
         <p class="fs-1 mb-2">🛒</p>
         <h5 class="text-muted">Tu carrito está vacío</h5>
         <a class="btn btn-primary mt-3" href="/">Ver productos</a>
     </div>
 
-    <!-- Carrito con productos -->
     <div class="row g-4" th:if="${!#lists.isEmpty(items)}">
 
-        <!-- Tabla de productos -->
         <div class="col-lg-8">
             <div class="resumen-card p-3">
                 <form action="/carrito/actualizar" id="form-carrito" method="post">
@@ -104,12 +99,10 @@
                         </tbody>
                     </table>
 
-                    <!-- Actualización automática al cambiar cantidad (ver JS) -->
                 </form>
             </div>
         </div>
 
-        <!-- Panel de resumen y checkout -->
         <div class="col-lg-4">
             <div class="resumen-card p-4 d-flex flex-column gap-3">
                 <h5 class="fw-bold mb-0">Resumen del pedido</h5>
@@ -140,7 +133,6 @@
     </div>
 </div>
 
-<!-- WS: contador de usuarios online -->
 <script>
     (function () {
         const badge    = document.getElementById('badge-online');
@@ -168,16 +160,12 @@
     })();
 </script>
 
-<!-- Actualización automática del carrito al cambiar cantidad -->
 <script>
     (function () {
         let debounceTimer = null;
-
-        // Escuchar cambios en todos los inputs de cantidad
         document.querySelectorAll('.cantidad-input').forEach(function (input) {
             input.addEventListener('input', function () {
                 clearTimeout(debounceTimer);
-                // Esperar 800ms de inactividad antes de enviar
                 debounceTimer = setTimeout(function () {
                     document.getElementById('form-carrito').submit();
                 }, 800);

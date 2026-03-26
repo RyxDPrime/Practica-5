@@ -55,11 +55,8 @@
                 </span>
 
 
-
-                <!-- Botones para todas las demás cuentas -->
                 <span th:if="${not esAdminProtegido and not esCuentaSesion}" class="admin-actions">
 
-                    <!-- Quitar Admin: visible solo si ya es admin -->
                     <button th:if="${u.admin}"
                             class="btn btn-outline-primary btn-sm admin-btn"
                             th:data-usuario-id="${u.id}"
@@ -68,7 +65,6 @@
                         Quitar Admin
                     </button>
 
-                    <!-- Hacer Admin: visible solo si NO es admin -->
                     <button th:unless="${u.admin}"
                             class="btn btn-primary btn-sm admin-btn"
                             th:data-usuario-id="${u.id}"

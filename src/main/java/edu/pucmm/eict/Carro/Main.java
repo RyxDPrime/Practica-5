@@ -21,9 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Main {
 
-    // ─────────────────────────────────────────────────────────
-    //  Req. 1 — Usuarios online
-    // ─────────────────────────────────────────────────────────
     static final Set<WsContext> usuariosWs = ConcurrentHashMap.newKeySet();
 
     static void broadcastOnline() {
@@ -34,9 +31,6 @@ public class Main {
         });
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  Req. 2 — Comentarios en tiempo real
-    // ─────────────────────────────────────────────────────────
     static final Map<Long, Set<WsContext>> productosWs = new ConcurrentHashMap<>();
 
     static void broadcastEliminarComentario(Long productoId, Long comentarioId) {
@@ -66,9 +60,6 @@ public class Main {
                 .replace("\n", "\\n").replace("\r", "\\r");
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  Req. 3 — Dashboard de ventas en tiempo real
-    // ─────────────────────────────────────────────────────────
     static final Set<WsContext> dashboardWs = ConcurrentHashMap.newKeySet();
 
     static void broadcastDashboard(EntityManagerFactory emf) {
@@ -110,9 +101,6 @@ public class Main {
         }
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  Arranque
-    // ─────────────────────────────────────────────────────────
     static void main(String[] args) throws Exception {
 
         Server.createTcpServer("-tcp", "-tcpAllowOthers", "-ifNotExists", "-tcpPort", "9092").start();
@@ -140,10 +128,6 @@ public class Main {
             config.jetty.port = 7000;
 
             config.routes.before(ctx -> autoLogin(ctx, emf, encryptor));
-
-            // ══════════════════════════════════════════════════════════
-            //  WebSockets
-            // ══════════════════════════════════════════════════════════
 
             config.routes.ws("/ws/online", ws -> {
                 ws.onConnect(ctx -> {
@@ -181,11 +165,6 @@ public class Main {
                 ws.onError  (ctx ->   dashboardWs.remove(ctx));
             });
 
-            // ══════════════════════════════════════════════════════════
-            //  Rutas HTTP
-            // ══════════════════════════════════════════════════════════
-
-            // ── Admin: Productos ──────────────────────────────────────
             config.routes.post("/admin/productos", ctx -> {
                 Usuario usuario = ctx.sessionAttribute("usuario");
                 if (usuario == null || !usuario.isAdmin()) { ctx.status(401); return; }
@@ -291,7 +270,6 @@ public class Main {
                 em.close();
             });
 
-            // ── Admin: Dashboard ──────────────────────────────────────
             config.routes.get("/admin/dashboard", ctx -> {
                 Usuario admin = ctx.sessionAttribute("usuario");
                 if (admin == null || !admin.isAdmin()) { ctx.redirect("/login"); return; }
@@ -319,7 +297,6 @@ public class Main {
                 em.close();
             });
 
-            // ── Admin: Compras ────────────────────────────────────────
             config.routes.get("/admin/compras", ctx -> {
                 Usuario admin = ctx.sessionAttribute("usuario");
                 if (admin == null || !admin.isAdmin()) { ctx.redirect("/login"); return; }
@@ -331,29 +308,22 @@ public class Main {
                 em.close();
             });
 
-            // ── Admin: Usuarios ───────────────────────────────────────
-            // FIX: se pasa sesionUsuarioId al modelo para que Thymeleaf
-            //      pueda identificar la fila del admin logueado
             config.routes.get("/admin/usuarios", ctx -> {
                 Usuario admin = ctx.sessionAttribute("usuario");
                 if (admin == null || !admin.isAdmin()) { ctx.redirect("/login"); return; }
                 EntityManager em = emf.createEntityManager();
                 List<Usuario> usuarios = em.createQuery("FROM Usuario ORDER BY id", Usuario.class).getResultList();
                 em.close();
-                // ID del admin en sesión para el template
                 long sesionUsuarioId = admin.getId();
                 ctx.render("admin-usuarios.html", Map.of(
                         "usuarios",        usuarios,
                         "sesionUsuarioId", sesionUsuarioId
                 ));
             });
-
-            // FIX: DELETE bloquea al usuario logueado (no solo al hardcoded "admin")
             config.routes.delete("/admin/usuarios/{id}", ctx -> {
                 Usuario admin = ctx.sessionAttribute("usuario");
                 if (admin == null || !admin.isAdmin()) { ctx.status(401); return; }
                 Long id = Long.parseLong(ctx.pathParam("id"));
-                // Bloquear auto-eliminación: compara por ID, no por nombre
                 if (id == admin.getId()) { ctx.status(403); return; }
                 EntityManager em = emf.createEntityManager();
                 em.getTransaction().begin();
@@ -364,7 +334,6 @@ public class Main {
                 ctx.status(204);
             });
 
-            // FIX: PUT ahora ALTERNA el rol (toggle) en lugar de solo asignar true
             config.routes.put("/admin/usuarios/{id}/admin", ctx -> {
                 Usuario admin = ctx.sessionAttribute("usuario");
                 if (admin == null || !admin.isAdmin()) { ctx.status(401); return; }
@@ -373,7 +342,6 @@ public class Main {
                 em.getTransaction().begin();
                 Usuario usuario = em.find(Usuario.class, id);
                 if (usuario != null) {
-                    // Toggle: si era admin lo quita, si no era admin lo pone
                     usuario.setAdmin(!usuario.isAdmin());
                 }
                 em.getTransaction().commit();
@@ -381,7 +349,6 @@ public class Main {
                 ctx.status(204);
             });
 
-            // ── Admin: Comentarios ────────────────────────────────────
             config.routes.post("/admin/comentarios/{id}/eliminar", ctx -> {
                 Usuario usuario = ctx.sessionAttribute("usuario");
                 if (usuario == null || !usuario.isAdmin()) { ctx.status(401); return; }
@@ -401,7 +368,6 @@ public class Main {
                 } else { ctx.redirect("/"); }
             });
 
-            // ── Página principal ──────────────────────────────────────
             config.routes.get("/", ctx -> {
                 int pagina = ctx.queryParam("page") != null
                         ? Integer.parseInt(ctx.queryParam("page")) : 1;
@@ -427,7 +393,6 @@ public class Main {
                 em.close();
             });
 
-            // ── Detalle de producto ───────────────────────────────────
             config.routes.get("/producto/{id}", ctx -> {
                 Long id = Long.parseLong(ctx.pathParam("id"));
                 EntityManager em = emf.createEntityManager();
@@ -465,7 +430,6 @@ public class Main {
                 ctx.redirect("/producto/" + productoId);
             });
 
-            // ── Auth ──────────────────────────────────────────────────
             config.routes.get("/login", ctx -> {
                 boolean loginError = "1".equals(ctx.queryParam("error"));
                 boolean registroOk = "1".equals(ctx.queryParam("registro"));
@@ -492,7 +456,6 @@ public class Main {
                     ctx.sessionAttribute("esAdmin", u.isAdmin());
                     if (!u.isAdmin())
                     {
-                        // Restaura el carrito guardado en BD en cada login exitoso.
                         List<ItemCarrito> carrito = cargarCarritoDB(emf, u.getUsername());
                         ctx.sessionAttribute("carrito", carrito);
                     }
@@ -529,7 +492,6 @@ public class Main {
                 ctx.redirect("/");
             });
 
-            // ── Carrito ───────────────────────────────────────────────
             config.routes.post("/carrito/items", ctx -> {
                 Usuario usuario = ctx.sessionAttribute("usuario");
                 if (usuario == null) { ctx.redirect("/login"); return; }
@@ -596,7 +558,6 @@ public class Main {
                 ctx.redirect("/carrito");
             });
 
-            // ── Checkout ──────────────────────────────────────────────
             config.routes.post("/carrito/checkout", ctx -> {
                 Usuario usuario = ctx.sessionAttribute("usuario");
                 if (usuario == null) { ctx.redirect("/login"); return; }
@@ -627,7 +588,6 @@ public class Main {
         }).start();
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
 
     private static void crearAdminSiNoExiste(EntityManagerFactory emf) {
         EntityManager em = emf.createEntityManager();
@@ -751,4 +711,3 @@ public class Main {
         return carrito;
     }
 }
-
