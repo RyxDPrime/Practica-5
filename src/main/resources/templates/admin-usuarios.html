@@ -43,13 +43,13 @@
                 <span class="badge bg-secondary" th:unless="${u.admin}">Usuario</span>
             </td>
 
-            <td>
+            <td th:with="esAdminProtegido=${#strings.equalsIgnoreCase(u.username, 'admin') or u.id == 1}, esCuentaSesion=${u.id == sesionUsuarioId}">
                 <span class="badge bg-secondary fs-6 px-3 py-2"
-                    th:if="${u.username == 'admin' || u.id == 1}">
+                    th:if="${esAdminProtegido}">
                     No disponible para administrador
                 </span>
 
-                <span th:if="${u.id == sesionUsuarioId && u.username != 'admin'}"
+                <span th:if="${not esAdminProtegido and esCuentaSesion}"
                       class="badge bg-secondary fs-6 px-3 py-2">
                     Esta es tu cuenta &mdash; no se puede modificar
                 </span>
@@ -57,7 +57,7 @@
 
 
                 <!-- Botones para todas las demás cuentas -->
-                <span th:unless="${u.id == sesionUsuarioId}" class="admin-actions">
+                <span th:if="${not esAdminProtegido and not esCuentaSesion}" class="admin-actions">
 
                     <!-- Quitar Admin: visible solo si ya es admin -->
                     <button th:if="${u.admin}"
@@ -106,6 +106,8 @@
             .then(response => {
                 if (response.ok) {
                     location.reload();
+                } else if (response.status === 403) {
+                    alert('No se puede modificar la cuenta de administrador protegida ni tu propia cuenta.');
                 } else {
                     alert('Error al actualizar el rol del usuario');
                 }
@@ -121,7 +123,7 @@
                 if (response.ok) {
                     location.reload();
                 } else if (response.status === 403) {
-                    alert('No puedes eliminar tu propia cuenta.');
+                    alert('No se puede eliminar la cuenta de administrador protegida ni tu propia cuenta.');
                 } else {
                     alert('Error al eliminar usuario');
                 }
