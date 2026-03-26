@@ -88,7 +88,9 @@
             <span id="contador-online">…</span> online
         </span>
 
-        <a class="btn btn-outline-primary btn-sm" href="/carrito">
+        <a class="btn btn-outline-primary btn-sm"
+           href="/carrito"
+           th:if="${usuario != null and !usuario.admin}">
             Carrito (<span th:text="${cantidadCarrito}">0</span>)
         </a>
 

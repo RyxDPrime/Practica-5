@@ -458,9 +458,12 @@ public class Main {
                     Usuario u = usuarios.getFirst();
                     ctx.sessionAttribute("usuario", u);
                     ctx.sessionAttribute("esAdmin", u.isAdmin());
-                    // Restaura el carrito guardado en BD en cada login exitoso.
-                    List<ItemCarrito> carrito = cargarCarritoDB(emf, u.getUsername());
-                    ctx.sessionAttribute("carrito", carrito);
+                    if (!u.isAdmin())
+                    {
+                        // Restaura el carrito guardado en BD en cada login exitoso.
+                        List<ItemCarrito> carrito = cargarCarritoDB(emf, u.getUsername());
+                        ctx.sessionAttribute("carrito", carrito);
+                    }
                     if (ctx.formParam("remember") != null)
                         ctx.cookie("rememberMe", encryptor.encrypt(u.getUsername()), 60 * 60 * 24 * 7);
                     logAuthEvent(username);
