@@ -146,7 +146,14 @@ public class Main {
             // ══════════════════════════════════════════════════════════
 
             config.routes.ws("/ws/online", ws -> {
-                ws.onConnect(ctx -> { usuariosWs.add(ctx);    broadcastOnline(); });
+                ws.onConnect(ctx -> {
+                    // Solo contar usuarios autenticados
+                    Usuario usuario = ctx.sessionAttribute("usuario");
+                    if (usuario != null) {
+                        usuariosWs.add(ctx);
+                        broadcastOnline();
+                    }
+                });
                 ws.onClose  (ctx -> { usuariosWs.remove(ctx); broadcastOnline(); });
                 ws.onError  (ctx ->   usuariosWs.remove(ctx));
             });

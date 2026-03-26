@@ -197,9 +197,13 @@
 
 </div>
 
-<!-- Req. 1: WebSocket usuarios online -->
-<script>
+<!-- Req. 1: WebSocket usuarios online (solo usuarios logueados) -->
+<script th:inline="javascript">
     (function () {
+        const usuario = /*[[${usuario}]]*/ null;
+        // Solo conectar si hay usuario autenticado
+        if (usuario === null) return;
+
         const badge   = document.getElementById('badge-online');
         const contador = document.getElementById('contador-online');
         const proto   = location.protocol === 'https:' ? 'wss' : 'ws';
