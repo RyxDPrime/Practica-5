@@ -128,5 +128,25 @@
     }
 </script>
 
+<script th:inline="javascript">
+    const appBasePath = /*[[@{/}]]*/ '/';
+    const normalizedBase = appBasePath.endsWith('/') ? appBasePath.slice(0, -1) : appBasePath;
+
+    function conectarPresenciaOnline() {
+        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws = new WebSocket(proto + '://' + location.host + normalizedBase + '/ws/online');
+
+        ws.onclose = function () {
+            setTimeout(conectarPresenciaOnline, 3000);
+        };
+
+        ws.onerror = function () {
+            ws.close();
+        };
+    }
+
+    conectarPresenciaOnline();
+</script>
+
 </body>
 </html>

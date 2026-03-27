@@ -133,14 +133,16 @@
     </div>
 </div>
 
-<script>
+<script th:inline="javascript">
     (function () {
         const badge    = document.getElementById('badge-online');
         const contador = document.getElementById('contador-online');
         const proto    = location.protocol === 'https:' ? 'wss' : 'ws';
+        const appBasePath = /*[[@{/}]]*/ '/';
+        const normalizedBase = appBasePath.endsWith('/') ? appBasePath.slice(0, -1) : appBasePath;
         let ws;
         function conectarOnline() {
-            ws = new WebSocket(proto + '://' + location.host + '/ws/online');
+            ws = new WebSocket(proto + '://' + location.host + normalizedBase + '/ws/online');
             ws.onopen    = () => badge.classList.remove('desconectado');
             ws.onmessage = e => {
                 try {

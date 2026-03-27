@@ -403,7 +403,8 @@ public class Main {
                 if (producto == null) { ctx.status(404); em.close(); return; }
                 ctx.render("producto-detalle.html", Map.of(
                         "producto",        producto,
-                        "cantidadCarrito", getCantidadCarrito(ctx)));
+                        "cantidadCarrito", getCantidadCarrito(ctx),
+                        "usuario",         ctx.sessionAttribute("usuario")));
                 em.close();
             });
 

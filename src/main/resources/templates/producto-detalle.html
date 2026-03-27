@@ -51,7 +51,7 @@
 <nav class="navbar navbar-light bg-white px-4 d-flex justify-content-between flex-wrap gap-2 mb-4">
     <a class="navbar-brand fw-bold" href="/">Mi Tienda</a>
     <div class="d-flex gap-2 align-items-center">
-        <span id="badge-online" class="desconectado" title="Usuarios navegando ahora">
+        <span id="badge-online" class="desconectado" title="Usuarios navegando ahora" th:if="${usuario != null}">
             <span class="pulso"></span>
             <span id="contador-online">…</span> online
         </span>
@@ -125,7 +125,7 @@
                     <p class="mb-0" th:text="${producto.descripcion}">Descripción del producto.</p>
                 </div>
 
-                <div class="mt-auto" th:if="${session.usuario != null and !session.usuario.admin}">
+                <div class="mt-auto" th:if="${usuario != null and !usuario.admin}">
                     <form action="/carrito/items" method="post">
                         <input name="id" th:value="${producto.id}" type="hidden">
                         <label class="form-label fw-semibold">Cantidad</label>
@@ -139,7 +139,7 @@
                 </div>
 
                 <div class="alert alert-warning py-2 mb-0"
-                     th:if="${session.usuario == null}">
+                     th:if="${usuario == null}">
                     <a href="/login">Inicia sesión</a> para agregar productos al carrito.
                 </div>
 
@@ -169,7 +169,7 @@
                             </div>
                             <form method="post"
                                   th:action="@{/admin/comentarios/{id}/eliminar(id=${c.id})}"
-                                  th:if="${session.usuario != null and session.usuario.admin}">
+                                  th:if="${usuario != null and usuario.admin}">
                                 <button class="btn btn-outline-danger btn-sm" type="submit">
                                     Eliminar
                                 </button>
@@ -185,7 +185,7 @@
             </p>
 
             <div class="card mt-4 border-0 shadow-sm"
-                 th:if="${session.usuario != null and !session.usuario.admin}">
+                 th:if="${usuario != null and !usuario.admin}">
                 <div class="card-body">
                     <h6 class="fw-bold mb-3">Agregar un comentario</h6>
                     <form action="/producto/comentar" method="post">
@@ -205,7 +205,7 @@
             </div>
 
             <div class="alert alert-warning mt-3"
-                 th:if="${session.usuario == null}">
+                 th:if="${usuario == null}">
                 <a href="/login">Inicia sesión</a> para dejar un comentario.
             </div>
 
@@ -218,9 +218,11 @@
 
 <script th:inline="javascript">
     (function () {
-        const productoId = 0;
-        const esAdmin =  false;
+        const productoId = [[${producto.id}]];
+        const esAdmin = [[${usuario != null and usuario.admin}]];
         const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        const appBasePath = /*[[@{/}]]*/ '/';
+        const normalizedBase = appBasePath.endsWith('/') ? appBasePath.slice(0, -1) : appBasePath;
         let ws;
 
         function actualizarContador() {
@@ -272,7 +274,7 @@
         }
 
         function conectar() {
-            ws = new WebSocket(proto + '://' + location.host + '/ws/producto/' + productoId);
+            ws = new WebSocket(proto + '://' + location.host + normalizedBase + '/ws/producto/' + productoId);
 
             ws.onmessage = function (e) {
                 try {
@@ -308,15 +310,17 @@
 
 <script th:inline="javascript">
     (function () {
-        const usuario =  null;
-        if (usuario === null) return;
+        const usuarioAutenticado = [[${usuario != null}]];
+        if (!usuarioAutenticado) return;
 
         const badge    = document.getElementById('badge-online');
         const contador = document.getElementById('contador-online');
         const proto    = location.protocol === 'https:' ? 'wss' : 'ws';
+        const appBasePath = /*[[@{/}]]*/ '/';
+        const normalizedBase = appBasePath.endsWith('/') ? appBasePath.slice(0, -1) : appBasePath;
         let ws;
         function conectarOnline() {
-            ws = new WebSocket(proto + '://' + location.host + '/ws/online');
+            ws = new WebSocket(proto + '://' + location.host + normalizedBase + '/ws/online');
             ws.onopen    = () => badge.classList.remove('desconectado');
             ws.onmessage = e => {
                 try {

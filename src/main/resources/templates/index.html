@@ -191,13 +191,15 @@
 
 <script th:inline="javascript">
     (function () {
-        const usuario = null;
-        if (usuario === null) return;
+        const usuarioAutenticado = [[${usuario != null}]];
+        if (!usuarioAutenticado) return;
 
         const badge   = document.getElementById('badge-online');
         const contador = document.getElementById('contador-online');
         const proto   = location.protocol === 'https:' ? 'wss' : 'ws';
-        const wsUrl   = proto + '://' + location.host + '/ws/online';
+        const appBasePath = /*[[@{/}]]*/ '/';
+        const normalizedBase = appBasePath.endsWith('/') ? appBasePath.slice(0, -1) : appBasePath;
+        const wsUrl   = proto + '://' + location.host + normalizedBase + '/ws/online';
         let ws;
 
         function conectar() {

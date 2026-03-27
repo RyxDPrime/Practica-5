@@ -101,7 +101,7 @@
     const totalInicial        =    0;
 </script>
 
-<script>
+<script th:inline="javascript">
 
     const COLORES = [
         '#4e79a7','#f28e2b','#e15759','#76b7b2',
@@ -194,10 +194,12 @@
     }
 
     const wsBadge = document.getElementById('ws-estado');
+    const appBasePath = /*[[@{/}]]*/ '/';
+    const normalizedBase = appBasePath.endsWith('/') ? appBasePath.slice(0, -1) : appBasePath;
 
     function conectarWS() {
         const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-        const ws    = new WebSocket(proto + '://' + location.host + '/ws/dashboard');
+        const ws    = new WebSocket(proto + '://' + location.host + normalizedBase + '/ws/dashboard');
 
         ws.onopen = function () {
             wsBadge.textContent  = 'Conectado';
@@ -242,7 +244,21 @@
         };
     }
 
+    function conectarPresenciaOnline() {
+        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws = new WebSocket(proto + '://' + location.host + normalizedBase + '/ws/online');
+
+        ws.onclose = function () {
+            setTimeout(conectarPresenciaOnline, 3000);
+        };
+
+        ws.onerror = function () {
+            ws.close();
+        };
+    }
+
     conectarWS();
+    conectarPresenciaOnline();
 </script>
 
 </body>
