@@ -22,6 +22,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Main {
 
     static final Set<WsContext> usuariosWs = ConcurrentHashMap.newKeySet();
+    static final Map<Long, Set<WsContext>> productosWs = new ConcurrentHashMap<>();
+    static final Set<WsContext> dashboardWs = ConcurrentHashMap.newKeySet();
+
 
     static void broadcastOnline() {
         String msg = "{\"online\":" + usuariosWs.size() + "}";
@@ -30,8 +33,6 @@ public class Main {
             catch (Exception e) { return true; }
         });
     }
-
-    static final Map<Long, Set<WsContext>> productosWs = new ConcurrentHashMap<>();
 
     static void broadcastEliminarComentario(Long productoId, Long comentarioId) {
         Set<WsContext> sesiones = productosWs.get(productoId);
@@ -59,8 +60,6 @@ public class Main {
         return value.replace("\\", "\\\\").replace("\"", "\\\"")
                 .replace("\n", "\\n").replace("\r", "\\r");
     }
-
-    static final Set<WsContext> dashboardWs = ConcurrentHashMap.newKeySet();
 
     static void broadcastDashboard(EntityManagerFactory emf) {
         if (dashboardWs.isEmpty()) return;
