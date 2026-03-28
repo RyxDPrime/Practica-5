@@ -401,10 +401,11 @@ public class Main {
                                 "LEFT JOIN FETCH p.comentarios LEFT JOIN FETCH p.imagenes WHERE p.id = :id",
                         Producto.class).setParameter("id", id).getSingleResult();
                 if (producto == null) { ctx.status(404); em.close(); return; }
-                ctx.render("producto-detalle.html", Map.of(
-                        "producto",        producto,
-                        "cantidadCarrito", getCantidadCarrito(ctx),
-                        "usuario",         ctx.sessionAttribute("usuario")));
+                Map<String, Object> model = new HashMap<>();
+                model.put("producto", producto);
+                model.put("cantidadCarrito", getCantidadCarrito(ctx));
+                model.put("usuario", ctx.sessionAttribute("usuario"));
+                ctx.render("producto-detalle.html", model);
                 em.close();
             });
 
